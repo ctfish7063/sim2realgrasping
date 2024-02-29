@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 import sys
-import argparse
-import torchvision.transforms as transforms
 import torch
-from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+import argparse
 from model import Augmentor
 from datasets import ImageDataset
+from torch.utils.data import DataLoader
+import torchvision.transforms as transforms
+from torch.utils.tensorboard import SummaryWriter
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()

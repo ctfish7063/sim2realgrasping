@@ -1,6 +1,6 @@
+import timm
 import torch
 import torch.nn as nn
-import timm
 
 class Encoder(nn.Module):
     def __init__(self, backbone_name):

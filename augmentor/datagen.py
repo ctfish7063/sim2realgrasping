@@ -1,19 +1,16 @@
-import argparse
-import sys
 import os
-import random
-import numpy as np
-import pickle
-import torchvision.transforms as transforms
-from torchvision.utils import save_image
-from torch.utils.data import DataLoader
-from torch.autograd import Variable
+import sys
 import torch
-from matplotlib import pyplot as plt
-from time import perf_counter
-
+import argparse
+import numpy as np
 from model import Generator
+from time import perf_counter
 from datasets import ImageDataset
+from matplotlib import pyplot as plt
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+from torchvision.utils import save_image
+import torchvision.transforms as transforms
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batchSize', type=int, default=1, help='size of the batches')

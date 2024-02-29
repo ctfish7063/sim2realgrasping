@@ -2,7 +2,7 @@ import torch
 from time import time
 import torchvision.transforms as transforms
 from torch.autograd import Variable
-from model import Generator
+from augmentor.model import Generator
 import matplotlib.pyplot as plt
 import cv2
 import rospy

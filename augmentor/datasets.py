@@ -1,12 +1,10 @@
 import os
-import random
-import numpy as np
 import torch
-from PIL import Image
-from torchvision.io import read_image, ImageReadMode
+import random
 from glob import glob
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
+from torchvision.io import read_image, ImageReadMode
 
 class ImageDataset(Dataset):
     def __init__(self, root, transforms_=None, unaligned=False, mode='train',rate=1.0):

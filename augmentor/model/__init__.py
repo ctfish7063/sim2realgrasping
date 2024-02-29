@@ -1,3 +1,3 @@
-from model.gan import Generator
-from model.augmentor import Augmentor
-from model.Vision import *
+from .gan import Generator
+from .augmentor import Augmentor
+from .vision import *

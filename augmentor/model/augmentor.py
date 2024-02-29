@@ -1,8 +1,9 @@
-import itertools
+import os
 import torch
-from gan import Generator, Discriminator
-from torch.autograd import Variable
+import itertools
 from utils import ReplayBuffer
+from torch.autograd import Variable
+from gan import Generator, Discriminator
 
 class LambdaLR():
     def __init__(self, n_epochs, offset, decay_start_epoch):
@@ -132,6 +133,8 @@ class Augmentor():
         self.lr_scheduler_D.step()
     
     def save(self, epoch, path = "./output"):
+        if (os.path.exists(path) == False):
+            os.mkdir(path)
         torch.save(self.netG_A2B.state_dict(), f'{path}/netG_A2B_cycle_{epoch}.pth')
         torch.save(self.netG_B2A.state_dict(), f'{path}/netG_B2A_cycle_{epoch}.pth')
         torch.save(self.netD_A.state_dict(), f'{path}/netD_A_cycle_{epoch}.pth')
@@ -157,5 +160,5 @@ if __name__ == "__main__":
     print(augmentor)
     print(augmentor.step(torch.rand(1,3,256,256), torch.rand(1,3,256,256)))
     augmentor.lr_step()
-    augmentor.save(1, path = "./tmp/")
+    augmentor.save(1, path = "./tmp")
     print("Sanity check passed")
