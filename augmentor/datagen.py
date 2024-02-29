@@ -56,54 +56,11 @@ input_B = Tensor(opt.batchSize, opt.output_nc, opt.size[0], opt.size[1])
 
 # Dataset loader
 transforms_ = [transforms.Resize((opt.size[0], opt.size[1]), transforms.InterpolationMode.BICUBIC), transforms.Lambda(lambda img: img / 127.5 - 1)]
-# transforms_det = transforms.Resize((224,224))
 dataloader = DataLoader(ImageDataset(opt.dataroot, transforms_=transforms_, mode='train'), 
                         batch_size=opt.batchSize, shuffle=False, num_workers=opt.n_cpu)
-###################################
-###### Testing######
-class ReplayMemory:
-    def __init__(self, capacity, seed):
-        random.seed(seed)
-        self.capacity = capacity
-        self.buffer = []
-        self.position = 0
-
-    def push(self, state, obs):
-        if len(self.buffer) < self.capacity:
-            self.buffer.append(None)
-        self.buffer[self.position] = (state, obs)
-        self.position = (self.position + 1) % self.capacity
-
-    def sample(self, batch_size):
-        batch = random.sample(self.buffer, batch_size)
-        state, obs = map(np.stack, zip(*batch))
-        return state, obs
-
-    def __len__(self):
-        return len(self.buffer)
-
-    def save_buffer(self, env_name, suffix="", save_path=None):
-        if not os.path.exists('checkpoints/'):
-            os.makedirs('checkpoints/')
-
-        if save_path is None:
-            save_path = "checkpoints/buffer_{}_{}".format(env_name, suffix)
-        print('Saving buffer to {}'.format(save_path))
-
-        with open(save_path, 'wb') as f:
-            pickle.dump(self.buffer, f)
-
-    def load_buffer(self, save_path):
-        print('Loading buffer from {}'.format(save_path))
-
-        with open(save_path, "rb") as f:
-            self.buffer = pickle.load(f)
-            self.position = len(self.buffer) % self.capacity
-
 # Create output dirs if they don't exist
 path = os.path.join(opt.dataroot, 'generated')
 secs = []
-# buffer = ReplayMemory(len(dataloader)*2,42)
 for i, batch in enumerate(dataloader):
     # Set model input
     start_t = perf_counter()
@@ -124,7 +81,6 @@ for i, batch in enumerate(dataloader):
     end_t = perf_counter()
     secs.append(end_t-start_t)
     sys.stdout.write('\rGenerated images %04d of %04d in %04f sec' % (i+1, len(dataloader), end_t-start_t))
-# buffer.save_buffer('CycleGAN','99')
 sys.stdout.write('\n')
 mean = np.mean(secs)
 std = np.std(secs)
@@ -134,4 +90,3 @@ secs = [i for i in secs if abs(i - mean) < 2 * std]
 plt.boxplot(secs, showfliers=False, labels=[])
 plt.title('Generate time for each image')
 plt.show()
-###################################一ㄓ
