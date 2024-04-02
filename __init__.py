@@ -1,0 +1,1 @@
+from sim2realgrasping.policy import FeatureExtractor
