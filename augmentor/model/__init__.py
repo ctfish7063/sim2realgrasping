@@ -1,3 +1,2 @@
-from .gan import Generator
-from .augmentor import Augmentor
-from .vision import *
+from .cyclegan import CycleGAN
+from .cut import CUT
