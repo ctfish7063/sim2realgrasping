@@ -22,10 +22,7 @@ class CycleGAN():
             self.netD_B = networks.defineD(opt.output_nc, self.device)
             if opt.epoch != 0:
                 print(f"Loading epoch {opt.epoch}")
-                self.netG_A2B.load_state_dict(torch.load(f'{opt.path}/netG_A2B_cycle_{opt.epoch}.pth'))
-                self.netG_B2A.load_state_dict(torch.load(f'{opt.path}/netG_B2A_cycle_{opt.epoch}.pth'))
-                self.netD_B.load_state_dict(torch.load(f'{opt.path}/netD_B_cycle_{opt.epoch}.pth'))
-                self.netD_A.load_state_dict(torch.load(f'{opt.path}/netD_A_cycle_{opt.epoch}.pth'))
+                self.load(opt.path, opt.epoch)
             self.criterion_GAN = GANLoss('lsgan').to(self.device)
             self.criterion_cycle = torch.nn.L1Loss()
             self.criterion_identity = torch.nn.L1Loss()
@@ -36,6 +33,9 @@ class CycleGAN():
             # Inputs & targets memory allocation
             self.fake_A_buffer = ReplayBuffer()
             self.fake_B_buffer = ReplayBuffer()
+        else:
+            self.netG_A2B.eval()
+            self.netG_B2A.eval()
 
     def data_dependent_initialize(self, data):
         pass
@@ -112,10 +112,17 @@ class CycleGAN():
     def sample_visual(self):
         return [self.fake_A[0], self.fake_B[0], self.real_A[0], self.real_B[0]]
     
+    def load(self, path, epoch):
+        self.netG_A2B.load_state_dict(torch.load(f'{path}/netG_A2B_cycle_{epoch}.pth'))
+        self.netG_B2A.load_state_dict(torch.load(f'{path}/netG_B2A_cycle_{epoch}.pth'))
+        if self.isTrain:
+            self.netD_B.load_state_dict(torch.load(f'{path}/netD_B_cycle_{epoch}.pth'))
+            self.netD_A.load_state_dict(torch.load(f'{path}/netD_A_cycle_{epoch}.pth'))
+
     def save(self, epoch, path = "./output"):
         if (os.path.exists(path) == False):
             os.mkdir(path)
-        torch.save(self.netG_A2B.state_dict(), f'{opt.path}/netG_A2B_cycle_{epoch}.pth')
-        torch.save(self.netG_B2A.state_dict(), f'{opt.path}/netG_B2A_cycle_{epoch}.pth')
-        torch.save(self.netD_A.state_dict(), f'{opt.path}/netD_A_cycle_{epoch}.pth')
-        torch.save(self.netD_B.state_dict(), f'{opt.path}/netD_B_cycle_{epoch}.pth')
+        torch.save(self.netG_A2B.state_dict(), f'{path}/netG_A2B_cycle_{epoch}.pth')
+        torch.save(self.netG_B2A.state_dict(), f'{path}/netG_B2A_cycle_{epoch}.pth')
+        torch.save(self.netD_A.state_dict(), f'{path}/netD_A_cycle_{epoch}.pth')
+        torch.save(self.netD_B.state_dict(), f'{path}/netD_B_cycle_{epoch}.pth')

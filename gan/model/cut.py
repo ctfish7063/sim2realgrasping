@@ -1,5 +1,6 @@
 import os
 import torch
+import numpy as np
 import itertools
 from .networks import defineG, defineF, defineD
 from .losses import PatchNCELoss, GANLoss
@@ -37,6 +38,9 @@ class CUT():
         if opt.isTrain:
             self.netD = defineD(opt.output_nc, self.device)
             self.nce_layers = [0, 4, 8, 12, 16]
+            if opt.epoch != 0:
+                print(f"Loading epoch {opt.epoch}")
+                self.load(opt.epoch, opt.path)
             self.criterionGAN = GANLoss("lsgan").to(self.device)
             self.criterionNCE = []
             for nce_layer in self.nce_layers:
@@ -46,6 +50,9 @@ class CUT():
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(0.5, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
+        else:
+            self.netG.eval()
+            self.netF.eval()
     
     def data_dependent_initialize(self, data):
         """
@@ -172,8 +179,15 @@ class CUT():
 
         return total_nce_loss / n_layers
 
+    def load(self, path, epoch):
+        self.netG.load_state_dict(torch.load(path + f"/netG_{epoch}.pth"))
+        self.netF.load_state_dict(torch.load(path + f"/netF_{epoch}.pth"))
+        if self.opt.isTrain:
+            self.netD.load_state_dict(torch.load(path + f"/netD_{epoch}.pth"))
+
     def save(self, epoch, path = "./output"):
         if (os.path.exists(path) == False):
             os.mkdir(path)
-        torch.save(self.netF.state_dict(), f'{path}/netG_{epoch}.pth')
-        torch.save(self.netG.state_dict(), f'{path}/netF_{epoch}.pth')
+        torch.save(self.netF.state_dict(), f'{path}/netF_{epoch}.pth')
+        torch.save(self.netG.state_dict(), f'{path}/netG_{epoch}.pth')
+        torch.save(self.netD.state_dict(), f'{path}/netD_{epoch}.pth')
