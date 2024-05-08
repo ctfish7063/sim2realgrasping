@@ -110,7 +110,7 @@ class CycleGAN():
         return [self.loss_G, self.loss_GAN, self.loss_Idt, self.loss_Cycle, self.loss_D_A, self.loss_D_B]
     
     def sample_visual(self):
-        return [self.fake_A[0], self.fake_B[0], self.real_A[0], self.real_B[0]]
+        return [self.fake_A, self.fake_B, self.real_A, self.real_B]
     
     def load(self, path, epoch):
         self.netG_A2B.load_state_dict(torch.load(f'{path}/netG_A2B_cycle_{epoch}.pth'))

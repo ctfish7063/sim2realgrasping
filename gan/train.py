@@ -27,21 +27,23 @@ if __name__=='__main__':
     parser.add_argument('--lambda_GAN', type=float, default=1.0, help='weight for GAN loss:GAN(G(X))')
     parser.add_argument('--lambda_identity', type=float, default=0.5, help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
     parser.add_argument('--cuda', action='store_true', help='use GPU computation')
-    parser.add_argument('--cuda_device', type=str, default="cuda", help='cuda device to train on')
+    parser.add_argument('--cuda_device', type=str, default="cuda:0", help='cuda device to train on')
     parser.add_argument('--mode', type=str, default="head", help='training mode')
     parser.add_argument('--n_cpu', type=int, default=1, help='number of cpu threads to use during batch generation')
     parser.add_argument('--test', action='store_true', help="whether is in test phase")
     parser.add_argument('--path', type=str, default="./output", help='Path to save model to')
     parser.add_argument('--cutmode', type=str, default="cut", help="cut mode")
+    parser.add_argument('--model', type=str, default='cut', choices=['cut', 'cyclegan'], help='gan mode choice')
+
     opt = parser.parse_args()
-    opt.size = (256, 256)
+    opt.size = (84,84)
     opt.isTrain = not opt.test
     print(opt)
 
     if torch.cuda.is_available() and not opt.cuda:
         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
     # augmentor = CycleGAN(opt)
-    augmentor = CycleGAN(opt)
+    augmentor = CUT(opt) if opt.model == 'cut' else CycleGAN(opt)
     transforms_ = [
         transforms.RandomResizedCrop(
             (opt.size[0], opt.size[1]),
@@ -56,11 +58,13 @@ if __name__=='__main__':
     losses_names = augmentor.losses_names
     visual_names = augmentor.visual_names
     # Loss plot
-    writer = SummaryWriter(f'./runs/CycleGAN_{opt.mode}')
+    writer = SummaryWriter(f'./runs/{opt.model}_{opt.mode}')
     step = 0
+    postfix = "lost_nce" if opt.model == 'cut' else "lost_idt"
+    loss_idx = -2 if opt.model == 'cut' else 2
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):
         with tqdm(total=len(dataloader), desc=f'Epoch {epoch}/{opt.n_epochs + opt.n_epochs_decay + 1}', unit='batch') as pbar:
-            pbar.set_postfix(**{'loss_cycle': 0.0})
+            pbar.set_postfix(**{postfix: 0.0})
             for i, batch in enumerate(dataloader):
                 if (epoch == opt.epoch_count and i == 0):
                     augmentor.data_dependent_initialize(batch)
@@ -71,13 +75,13 @@ if __name__=='__main__':
                 assert(len(loss) == len(losses_names))
                 for idx, name in enumerate(losses_names):
                     writer.add_scalar(name, loss[idx], step)
-                pbar.set_postfix(**{'loss_NCE': loss[-2].detach().cpu().numpy()})
+                pbar.set_postfix(**{postfix: loss[loss_idx].detach().cpu().numpy()})
                 pbar.update(1)
         vis = augmentor.sample_visual()
         for idx, name in enumerate(visual_names):
             writer.add_image(name, vis[idx][0] * 0.5 + 0.5, epoch)
         # Save models checkpoints
-        augmentor.save(epoch, path = f"./output/{opt.mode}")
+        augmentor.save(epoch, path = f"./output/{opt.model}_{opt.mode}")
         # Update learning rates
         for s in schedulers:
             s.step()
