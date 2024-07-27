@@ -2,7 +2,7 @@ import os
 import torch
 import numpy as np
 import itertools
-from .networks import defineG, defineF, defineD
+from .networks import defineG, defineF, defineD, cal_gradient_penalty
 from .losses import PatchNCELoss, GANLoss
 
 class CUT():
@@ -40,8 +40,8 @@ class CUT():
             self.nce_layers = [0, 4, 8, 12, 16]
             if opt.epoch != 0:
                 print(f"Loading epoch {opt.epoch}")
-                self.load(opt.epoch, opt.path)
-            self.criterionGAN = GANLoss("lsgan").to(self.device)
+                self.load(opt.epoch, f"{opt.path}/{opt.model}_{opt.mode}")
+            self.criterionGAN = GANLoss("wgangp").to(self.device)
             self.criterionNCE = []
             for nce_layer in self.nce_layers:
                 self.criterionNCE.append(PatchNCELoss(opt).to(self.device))
@@ -144,6 +144,10 @@ class CUT():
         self.loss_D_real = self.criterionGAN(pred_real, True).mean()
         # combine loss and calculate gradients
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
+        if self.lossmode == "wgangp":
+            gradient_penalty, gradients = cal_gradient_penalty(self.netD, self.real_B, fake, self.device)
+            # combine loss and calculate gradients
+            loss_D += gradient_penalty
         return self.loss_D
 
     def compute_G_loss(self):
@@ -179,7 +183,7 @@ class CUT():
 
         return total_nce_loss / n_layers
 
-    def load(self, path, epoch):
+    def load(self, epoch, path):
         self.netG.load_state_dict(torch.load(path + f"/netG_{epoch}.pth"))
         self.netF.load_state_dict(torch.load(path + f"/netF_{epoch}.pth"))
         if self.opt.isTrain:

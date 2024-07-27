@@ -23,7 +23,8 @@ class CycleGAN():
             if opt.epoch != 0:
                 print(f"Loading epoch {opt.epoch}")
                 self.load(opt.path, opt.epoch)
-            self.criterion_GAN = GANLoss('lsgan').to(self.device)
+            self.lossmode = 'wgangp'
+            self.criterion_GAN = GANLoss('wgangp').to(self.device)
             self.criterion_cycle = torch.nn.L1Loss()
             self.criterion_identity = torch.nn.L1Loss()
             # Optimizers & LR schedulers
@@ -77,6 +78,10 @@ class CycleGAN():
         loss_D_fake = self.criterion_GAN(pred_fake, False)
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake) * 0.5
+        if self.lossmode == "wgangp":
+            gradient_penalty, gradients = networks.cal_gradient_penalty(netD, real, fake, self.device)
+            # combine loss and calculate gradients
+            loss_D += gradient_penalty
         loss_D.backward()
         return loss_D
     
