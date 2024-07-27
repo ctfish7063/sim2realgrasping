@@ -6,7 +6,7 @@ from .gan.model import networks
 class Augmentor(nn.Module):
     class opt:
         def __init__(self):
-            self.size = (256, 256)
+            self.size = (84, 84)
             self.isTrain = False
             self.epoch = 0
             self.epoch_count = 1
@@ -28,6 +28,7 @@ class Augmentor(nn.Module):
             self.test = True
             self.path = "./output"
             self.cutmode = "cut"
+            self.model = 'cut'
 
     def __init__(self, model_path, device):
         super(Augmentor, self).__init__()

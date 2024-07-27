@@ -38,6 +38,7 @@ if __name__=='__main__':
     opt = parser.parse_args()
     opt.size = (84,84)
     opt.isTrain = not opt.test
+    opt.epoch_count = opt.epoch
     print(opt)
 
     if torch.cuda.is_available() and not opt.cuda:
@@ -58,10 +59,12 @@ if __name__=='__main__':
     losses_names = augmentor.losses_names
     visual_names = augmentor.visual_names
     # Loss plot
-    writer = SummaryWriter(f'./runs/{opt.model}_{opt.mode}')
     step = 0
     postfix = "lost_nce" if opt.model == 'cut' else "lost_idt"
     loss_idx = -2 if opt.model == 'cut' else 2
+    if opt.model == 'cut' and opt.cutmode == 'fastcut':
+        opt.model == 'fastcut'
+    writer = SummaryWriter(f'./runs/{opt.model}_{opt.mode}_corrected')
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):
         with tqdm(total=len(dataloader), desc=f'Epoch {epoch}/{opt.n_epochs + opt.n_epochs_decay + 1}', unit='batch') as pbar:
             pbar.set_postfix(**{postfix: 0.0})
@@ -81,7 +84,7 @@ if __name__=='__main__':
         for idx, name in enumerate(visual_names):
             writer.add_image(name, vis[idx][0] * 0.5 + 0.5, epoch)
         # Save models checkpoints
-        augmentor.save(epoch, path = f"./output/{opt.model}_{opt.mode}")
+        augmentor.save(epoch, path = f"./output/{opt.model}_{opt.mode}_corrected")
         # Update learning rates
         for s in schedulers:
             s.step()
